@@ -1,9 +1,19 @@
+// src/pages/ChatRoom.tsx
 import { useEffect, useState } from 'react';
 import { connectSocket, getSocket } from '../services/socket';
+import api from '../services/api';
+import '../App.css'; // vamos criar esse CSS
 
 interface Message {
   message: string;
   fileURL: string | null;
+  from: 'me' | 'them';
+}
+
+interface Chat {
+  id: string;
+  name: string;
+  avatar: string;
 }
 
 interface ChatRoomProps {
@@ -14,25 +24,31 @@ interface ChatRoomProps {
 const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState('');
+  const [chatInfo, setChatInfo] = useState<Chat | null>(null);
 
+  useEffect(() => {
+  api.get<{ id: string; name: string; avatar?: string }>(`/chat/${chatId}`)
+    .then(res => {
+      setChatInfo({
+        id: res.data.id,
+        name: res.data.name,
+        avatar: res.data.avatar || `https://i.pravatar.cc/40?u=${res.data.name}`
+      });
+    });
+}, [chatId]);
+
+
+  // Socket setup
   useEffect(() => {
     const socket = connectSocket(token);
 
     socket.on('connect', () => {
-      console.log('✅ Socket connected. Joining room...');
       socket.emit('joinRoom', chatId);
     });
 
-    socket.on('newMessage', (data: Message) => {
-      setMessages((prev) => [...prev, data]);
-    });
-
-    socket.on('updateMessage', (data) => {
-      console.log('updateMessage received:', data);
-    });
-
-    socket.on('connect_error', (err) => {
-      console.error('❌ Socket connect error:', err.message);
+    socket.on('newMessage', (data: { message: string; fileURL: string | null; from: string }) => {
+      const isMine = data.from === 'me';
+      setMessages((prev) => [...prev, { ...data, from: isMine ? 'me' : 'them' }]);
     });
 
     return () => {
@@ -40,29 +56,46 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
     };
   }, [chatId, token]);
 
-
   const handleSend = () => {
     const socket = getSocket();
     if (!socket || !message.trim()) return;
+
+    const newMsg: Message = {
+      message,
+      fileURL: null,
+      from: 'me'
+    };
+
+    setMessages((prev) => [...prev, newMsg]);
     socket.emit('sendMessage', chatId, message);
     setMessage('');
   };
 
   return (
-    <div>
-      <h2>Chat {chatId}</h2>
-      <div>
+    <div className="chat-room">
+      <div className="chat-header">
+        <img className="chat-avatar" src={chatInfo?.avatar} alt={chatInfo?.name} />
+        <h2>{chatInfo?.name}</h2>
+      </div>
+
+      <div className="chat-messages">
         {messages.map((m, index) => (
-          <p key={index}>{m.message}</p>
+          <div key={index} className={`message ${m.from}`}>
+            {m.message}
+          </div>
         ))}
       </div>
-      <input
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Type a message"
-      />
-      <button onClick={handleSend}>Send</button>
+
+      <div className="chat-input">
+        <input
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Digite uma mensagem..."
+        />
+        <button onClick={handleSend}>Enviar</button>
+      </div>
     </div>
   );
 };
+
 export default ChatRoom;
