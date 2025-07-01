@@ -20,7 +20,7 @@ export default function Login() {
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4">
       <div className="w-full max-w-md bg-[#1a1f2e] rounded-xl shadow-xl p-8">
-        <h2 className="text-3xl font-bold text-center text-white mb-8">Bem-vindo ao OxiZap</h2>
+        <h2 className="text-3xl font-bold text-center text-white mb-8">Bem-vindo ao Ekko!</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-gray-300 text-sm mb-1">Email</label>
@@ -48,6 +48,15 @@ export default function Login() {
           >
             Entrar
           </button>
+          <p className="mt-4 text-center text-gray-400 text-sm">
+            Não tem uma conta?{' '}
+            <span
+              className="text-purple-500 cursor-pointer hover:underline"
+              onClick={() => navigate('/signup')}
+            >
+              Cadastre-se
+            </span>
+          </p>
         </form>
       </div>
     </div>
