@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signup } from '../services/auth';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 export default function Signup() {
   const [name, setName] = useState('');

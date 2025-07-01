@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/auth';
+import toast from 'react-hot-toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ export default function Login() {
       await login(email, password);
       navigate('/chats');
     } catch (err) {
-      alert('Falha no login');
+      toast.error('Email ou senha inválidos');
     }
   };
 
