@@ -7,12 +7,13 @@ interface Chat {
   name: string;
   avatar: string;
   lastMessage: string;
-  updatedAt?: string; // ← se o backend retornar a hora da última msg
+  updatedAt?: string;
 }
 
 export default function ChatList() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [search, setSearch] = useState('');
+  const [userName, setUserName] = useState('...');
   const navigate = useNavigate();
   const { id: selectedId } = useParams();
 
@@ -22,6 +23,17 @@ export default function ChatList() {
     }, 200);
     return () => clearTimeout(delayDebounce);
   }, [search]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    api.get('/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then((res) => setUserName(res.data.name))
+    .catch(() => setUserName('Usuário'));
+  }, []);
 
   const fetchChats = (searchTerm = '') => {
     api.get('/chat', { params: { searchTerm } })
@@ -54,37 +66,41 @@ export default function ChatList() {
   }
 
   return (
-    <div className="h-full w-90 p-4 bg-[#1f2937] text-white overflow-y-auto">
-      <h2 className="text-2xl font-semibold mb-4">Chats</h2>
+    <div className="h-full w-full flex flex-col bg-[#1f2937] text-white">
+      {/* Topo */}
+      <div className="p-4">
+        <h2 className="text-2xl font-semibold mb-4">Chats</h2>
 
-      <div className="mb-4 relative">
-        <input
-          type="text"
-          className="w-full px-4 py-2 pr-10 rounded-md bg-gray-700 text-white placeholder-gray-400 text-sm"
-          placeholder="Pesquisar..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-500 text-sm"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              margin: 0,
-              cursor: 'pointer',
-              lineHeight: 1
-            }}
-          >
-            ×
-          </button>
-        )}
+        <div className="mb-4 relative">
+          <input
+            type="text"
+            className="w-full px-4 py-2 pr-10 rounded-md bg-gray-700 text-white placeholder-gray-400 text-sm"
+            placeholder="Pesquisar..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-500 text-sm"
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                cursor: 'pointer',
+                lineHeight: 1
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
 
-      <ul className="space-y-2">
+      {/* Lista de chats */}
+      <ul className="flex-1 overflow-y-auto px-4 space-y-2">
         {chats.map((chat) => (
           <li
             key={chat.id}
@@ -114,6 +130,23 @@ export default function ChatList() {
           </li>
         ))}
       </ul>
+
+      {/* Rodapé estilo Discord com perfil */}
+      <div className="p-4 border-t border-gray-700">
+        <div className="flex items-center justify-between bg-[#111827] px-4 py-2 rounded-md">
+          <div>
+            <p className="text-sm font-semibold text-white">{userName}</p>
+            <p className="text-xs text-green-400">● Online</p>
+          </div>
+          <button
+            onClick={() => navigate('/edit-profile')}
+            className="text-gray-300 hover:text-white text-lg"
+            title="Editar perfil"
+          >
+            ✏️
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

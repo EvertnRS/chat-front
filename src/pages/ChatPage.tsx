@@ -7,13 +7,12 @@ export default function ChatPage() {
   const token = localStorage.getItem('token') || '';
 
   return (
-    <div className="h-screen w-screen flex">
+    <div className="h-screen w-screen flex relative">
       {/* Sidebar de contatos */}
       <div className="w-1/4 bg-[#1f2937] text-white overflow-y-auto">
         <ChatList />
       </div>
 
-      {/* Área de chat */}
       <div className="flex-1 bg-[#111827] text-white">
         {id ? (
           <ChatRoom chatId={id} token={token} />
@@ -23,6 +22,7 @@ export default function ChatPage() {
           </div>
         )}
       </div>
+
     </div>
   );
 }
