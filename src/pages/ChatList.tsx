@@ -28,22 +28,26 @@ export default function ChatList() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    api.get('/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then((res) => setUserName(res.data.name))
-    .catch(() => setUserName('Usuário'));
+    api
+      .get('/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setUserName(res.data.name))
+      .catch(() => setUserName('Usuário'));
   }, []);
 
   const fetchChats = (searchTerm = '') => {
-    api.get('/chat', { params: { searchTerm } })
+    api
+      .get('/chat', { params: { searchTerm } })
       .then((res) => {
         const formatted = res.data.map((chat: any) => ({
           id: chat.id,
           name: chat.name,
           avatar: chat.avatar || `https://i.pravatar.cc/40?u=${chat.name}`,
           lastMessage: chat.lastMessage || '',
-          updatedAt: chat.updatedAt || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          updatedAt:
+            chat.updatedAt ||
+            new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }));
         setChats(formatted);
       })
@@ -69,12 +73,14 @@ export default function ChatList() {
     <div className="h-full w-full flex flex-col bg-[#1f2937] text-white">
       {/* Topo */}
       <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg text-gray-300">Conectado como</h2>
-          <p className="text-xl font-semibold text-white leading-tight truncate max-w-[200px]">{userName}</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg text-gray-300">Conectado como</h2>
+            <p className="text-xl font-semibold text-white leading-tight truncate max-w-[200px]">
+              {userName}
+            </p>
+          </div>
         </div>
-      </div>
         <div className="mb-4 relative">
           <input
             type="text"
@@ -94,7 +100,7 @@ export default function ChatList() {
                 padding: 0,
                 margin: 0,
                 cursor: 'pointer',
-                lineHeight: 1
+                lineHeight: 1,
               }}
             >
               ×
@@ -135,20 +141,32 @@ export default function ChatList() {
         ))}
       </ul>
 
-      {/* Rodapé estilo Discord com perfil */}
+      {/* Rodapé com perfil e botões */}
       <div className="p-4 border-t border-gray-700">
         <div className="flex items-center justify-between bg-[#111827] px-4 py-2 rounded-md">
           <div>
             <p className="text-sm font-semibold text-white">{userName}</p>
             <p className="text-xs text-green-400">● Online</p>
           </div>
-          <button
-            onClick={() => navigate('/edit-profile')}
-            className="text-gray-300 hover:text-white text-lg"
-            title="Editar perfil"
-          >
-            ✏️
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate('/edit-profile')}
+              className="text-gray-300 hover:text-white text-lg"
+              title="Editar perfil"
+            >
+              ✏️
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem('token');
+                navigate('/');
+              }}
+              className="text-gray-300 hover:text-red-500 text-lg"
+              title="Sair"
+            >
+              🔌
+            </button>
+          </div>
         </div>
       </div>
     </div>

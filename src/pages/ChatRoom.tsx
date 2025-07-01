@@ -27,7 +27,7 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  // 🔄 Buscar dados do chat atual
+// Buscar dados do chat atual
   useEffect(() => {
     const fetchChat = async () => {
       try {
@@ -48,7 +48,7 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
     fetchChat();
   }, [chatId]);
 
-  // 📡 Conectar ao socket
+  // Conectar ao socket
   useEffect(() => {
     const socket = connectSocket(token);
 
@@ -66,7 +66,7 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
     };
   }, [chatId, token]);
 
-  // ⬇️ Rolar para a última mensagem
+  // Rolar para a última mensagem
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -88,7 +88,6 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
 
   return (
     <div className="chat-room">
-      {/* ✅ Cabeçalho do Chat sem imagem */}
       <div className="chat-header px-4 py-3 border-b border-gray-700 bg-[#1a1f2e] flex items-center gap-2">
         <span className="text-purple-400 text-xl">💬</span>
         <h2 className="text-lg font-semibold text-white truncate">
@@ -96,7 +95,6 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
         </h2>
       </div>
 
-      {/* 💬 Mensagens */}
       <div className="chat-messages">
         {messages.map((m, index) => (
           <div key={index} className={`message ${m.from}`}>
