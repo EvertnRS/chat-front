@@ -69,8 +69,12 @@ export default function ChatList() {
     <div className="h-full w-full flex flex-col bg-[#1f2937] text-white">
       {/* Topo */}
       <div className="p-4">
-        <h2 className="text-2xl font-semibold mb-4">Chats</h2>
-
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg text-gray-300">Conectado como</h2>
+          <p className="text-xl font-semibold text-white leading-tight truncate max-w-[200px]">{userName}</p>
+        </div>
+      </div>
         <div className="mb-4 relative">
           <input
             type="text"

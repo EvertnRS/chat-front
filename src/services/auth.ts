@@ -15,6 +15,5 @@ export const signup = async (name: string, email: string, password: string) => {
 Criar novo grupo 
 	(Editar grupo) 
 	(Adicionar pelo email)
-Perfil (Discord)
 Grupos sem fotos
 Descrição do grupo*/
