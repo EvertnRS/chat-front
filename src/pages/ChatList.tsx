@@ -1,4 +1,3 @@
-// src/pages/ChatList.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
@@ -8,26 +7,31 @@ interface Chat {
   name: string;
   avatar: string;
   lastMessage: string;
+  updatedAt?: string; // ← se o backend retornar a hora da última msg
 }
 
 export default function ChatList() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const { id: selectedId } = useParams(); // id da rota atual
+  const { id: selectedId } = useParams();
 
   useEffect(() => {
-    fetchChats();
-  }, []);
+    const delayDebounce = setTimeout(() => {
+      fetchChats(search);
+    }, 200);
+    return () => clearTimeout(delayDebounce);
+  }, [search]);
 
   const fetchChats = (searchTerm = '') => {
     api.get('/chat', { params: { searchTerm } })
-      .then(res => {
+      .then((res) => {
         const formatted = res.data.map((chat: any) => ({
           id: chat.id,
           name: chat.name,
           avatar: chat.avatar || `https://i.pravatar.cc/40?u=${chat.name}`,
-          lastMessage: chat.lastMessage || ''
+          lastMessage: chat.lastMessage || '',
+          updatedAt: chat.updatedAt || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }));
         setChats(formatted);
       })
@@ -36,24 +40,49 @@ export default function ChatList() {
       });
   };
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    fetchChats(search);
-  };
+  function highlightMatch(text: string, query: string) {
+    if (!query) return text;
+    const regex = new RegExp(`(${query})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <span key={i} className="font-bold text-white">{part}</span>
+      ) : (
+        <span key={i}>{part}</span>
+      )
+    );
+  }
 
   return (
-    <div className="h-full w-full p-4 bg-[#1f2937] text-white">
-      <h2 className="text-xl font-semibold mb-4">Conversas</h2>
+    <div className="h-full w-90 p-4 bg-[#1f2937] text-white overflow-y-auto">
+      <h2 className="text-2xl font-semibold mb-4">Chats</h2>
 
-      <form onSubmit={handleSearch} className="mb-4">
+      <div className="mb-4 relative">
         <input
           type="text"
-          className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+          className="w-full px-4 py-2 pr-10 rounded-md bg-gray-700 text-white placeholder-gray-400 text-sm"
           placeholder="Pesquisar..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </form>
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-500 text-sm"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              margin: 0,
+              cursor: 'pointer',
+              lineHeight: 1
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
 
       <ul className="space-y-2">
         {chats.map((chat) => (
@@ -69,9 +98,16 @@ export default function ChatList() {
               src={chat.avatar}
               alt={chat.name}
             />
-            <div className="flex flex-col">
-              <span className="font-medium">{chat.name}</span>
-              <span className="text-sm text-gray-400 truncate max-w-[150px]">
+            <div className="flex-1 overflow-hidden">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-sm truncate max-w-[150px]">
+                  {highlightMatch(chat.name, search)}
+                </span>
+                <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                  {chat.updatedAt}
+                </span>
+              </div>
+              <span className="text-xs text-gray-400 truncate block max-w-full">
                 {chat.lastMessage}
               </span>
             </div>
