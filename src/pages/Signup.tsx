@@ -18,8 +18,14 @@ export default function Signup() {
     });
 
       navigate('/'); // Redireciona para o login
-    } catch (err) {
-      toast.error('Erro ao cadastrar. Verifique os dados.');
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.error;
+
+      if (errorMessage === 'User with this email already exists') {
+        toast.error('Este e-mail já está em uso.', { position: 'top-right' });
+      } else {
+        toast.error('Erro ao cadastrar. Verifique os dados.', { position: 'top-right' });
+      }
     }
   };
 

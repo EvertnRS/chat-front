@@ -3,8 +3,6 @@ import api from './api';
 interface LoginResponse {
   user: {
     id: string;
-    name: string;
-    email: string;
   };
   token: string;
 }
@@ -22,8 +20,12 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 
   localStorage.setItem('token', token);
   localStorage.setItem('userId', user.id);
-  localStorage.setItem('userName', user.name);
-  localStorage.setItem('userEmail', user.email);
+
+  const hasName = localStorage.getItem('userName');
+  const hasEmail = localStorage.getItem('userEmail');
+  if (!hasName || !hasEmail) {
+    console.warn('Nome/email não encontrados no localStorage após login.');
+  }
 
   return res.data;
 };
@@ -34,5 +36,9 @@ export const signup = async (
   password: string
 ): Promise<SignupResponse> => {
   const res = await api.post<SignupResponse>('/signup', { name, email, password });
+
+  localStorage.setItem('userName', res.data.name);
+  localStorage.setItem('userEmail', res.data.email);
+
   return res.data;
 };

@@ -14,11 +14,21 @@ interface Chat {
 export default function ChatList() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [search, setSearch] = useState('');
-  const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Usuário');
   const [showGroupModal, setShowGroupModal] = useState(false);
-
   const navigate = useNavigate();
   const { id: selectedId } = useParams();
+  const [userName, setUserName] = useState('Usuário');
+
+
+  useEffect(() => {
+  const storedName = localStorage.getItem('userName');
+  if (storedName) {
+    setUserName(storedName);
+  } else {
+    console.warn('Nome do usuário não encontrado no localStorage');
+  }
+}, []);
+
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
