@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 interface ValidUser {
@@ -12,12 +13,23 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState('');
   const [members, setMembers] = useState<ValidUser[]>([]);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  // ✅ Verifica se o usuário está autenticado
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Você precisa estar logado para criar um grupo.');
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleAddEmail = async () => {
+    console.log('Token no localStorage:', localStorage.getItem('token'));
     setError('');
     try {
       const res = await api.post<{ validEmails: ValidUser[] }>('/users/validate-emails', {
-        emails: [email]
+        emails: [email],
       });
 
       const valid = res.data.validEmails?.[0];
@@ -27,15 +39,15 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
         return;
       }
 
-      if (members.some(m => m.id === valid.id)) {
+      if (members.some((m) => m.id === valid.id)) {
         setError('Usuário já adicionado');
         return;
       }
 
-      setMembers(prev => [...prev, valid]);
+      setMembers((prev) => [...prev, valid]);
       setEmail('');
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Erro ao validar email:', err?.response?.status, err?.response?.data);
       setError('Erro ao validar e-mail');
     }
   };
@@ -46,14 +58,14 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
       formData.append('name', groupName);
       formData.append('description', description);
 
-      members.forEach(member => {
+      members.forEach((member) => {
         formData.append('participants', member.id);
       });
 
       await api.post('/groups', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       onClose();
@@ -70,13 +82,13 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
 
         <input
           value={groupName}
-          onChange={e => setGroupName(e.target.value)}
+          onChange={(e) => setGroupName(e.target.value)}
           placeholder="Nome do grupo"
           className="w-full p-2 mb-2 bg-gray-700 rounded"
         />
         <input
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="Descrição"
           className="w-full p-2 mb-2 bg-gray-700 rounded"
         />
@@ -84,11 +96,16 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
         <div className="flex gap-2 mb-2">
           <input
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Email do integrante"
             className="flex-1 p-2 bg-gray-700 rounded"
           />
-          <button onClick={handleAddEmail} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded">+</button>
+          <button
+            onClick={handleAddEmail}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded"
+          >
+            +
+          </button>
         </div>
 
         {error && <p className="text-red-400 mb-2">{error}</p>}
@@ -100,8 +117,15 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
         </ul>
 
         <div className="flex justify-between">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded">Cancelar</button>
-          <button onClick={handleCreateGroup} className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded">Criar Grupo</button>
+          <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded">
+            Cancelar
+          </button>
+          <button
+            onClick={handleCreateGroup}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded"
+          >
+            Criar Grupo
+          </button>
         </div>
       </div>
     </div>
