@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-interface ValidUser {
+interface Member {
   id: string;
   email: string;
 }
@@ -11,11 +11,10 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
-  const [members, setMembers] = useState<ValidUser[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // ✅ Verifica se o usuário está autenticado
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -24,54 +23,52 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
     }
   }, [navigate]);
 
-  const handleAddEmail = async () => {
-    console.log('Token no localStorage:', localStorage.getItem('token'));
+  const handleAddEmail = () => {
     setError('');
-    try {
-      const res = await api.post<{ validEmails: ValidUser[] }>('/users/validate-emails', {
-        emails: [email],
-      });
 
-      const valid = res.data.validEmails?.[0];
-
-      if (!valid) {
-        setError('Usuário não encontrado');
-        return;
-      }
-
-      if (members.some((m) => m.id === valid.id)) {
-        setError('Usuário já adicionado');
-        return;
-      }
-
-      setMembers((prev) => [...prev, valid]);
-      setEmail('');
-    } catch (err: any) {
-      console.error('Erro ao validar email:', err?.response?.status, err?.response?.data);
-      setError('Erro ao validar e-mail');
+    if (!email.includes('@')) {
+      setError('Email inválido');
+      return;
     }
+
+    if (members.some((m) => m.email === email)) {
+      setError('Usuário já adicionado');
+      return;
+    }
+
+    setMembers((prev) => [...prev, { id: '', email }]);
+    setEmail('');
   };
 
   const handleCreateGroup = async () => {
     try {
+      setError('');
+
       const formData = new FormData();
       formData.append('name', groupName);
       formData.append('description', description);
 
-      members.forEach((member) => {
-        formData.append('participants', member.id);
-      });
+      const currentUserId = localStorage.getItem('userId');
+      if (currentUserId && !members.find((m) => m.id === currentUserId)) {
+        formData.append('participants', currentUserId);
+      }
 
-      await api.post('/groups', formData, {
+      for (const member of members) {
+        formData.append('participants', member.email); // mandamos email, backend rejeita se não encontrar
+      }
+
+      await api.post('/chat/create', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
       onClose();
-    } catch (err) {
-      console.error(err);
-      setError('Erro ao criar grupo');
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Erro ao criar grupo';
+      console.error(msg);
+      setError(msg);
     }
   };
 

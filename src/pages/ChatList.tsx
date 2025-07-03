@@ -11,6 +11,12 @@ interface Chat {
   updatedAt?: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export default function ChatList() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [search, setSearch] = useState('');
@@ -19,16 +25,31 @@ export default function ChatList() {
   const { id: selectedId } = useParams();
   const [userName, setUserName] = useState('Usuário');
 
+  // Função para buscar o usuário pelo ID salvo
+  const fetchUserName = async () => {
+    const storedName = localStorage.getItem('userName');
+    if (storedName) {
+      setUserName(storedName);
+      return;
+    }
+
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    try {
+      const res = await api.get<User>(`/users/${userId}`);
+      if (res.data?.name) {
+        setUserName(res.data.name);
+        localStorage.setItem('userName', res.data.name);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar nome do usuário:', err);
+    }
+  };
 
   useEffect(() => {
-  const storedName = localStorage.getItem('userName');
-  if (storedName) {
-    setUserName(storedName);
-  } else {
-    console.warn('Nome do usuário não encontrado no localStorage');
-  }
-}, []);
-
+    fetchUserName();
+  }, []);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -137,43 +158,42 @@ export default function ChatList() {
       </ul>
 
       <div className="p-4 border-t border-gray-700">
-  <div className="flex items-center justify-between bg-[#111827] px-4 py-2 rounded-md">
-    <div>
-      <p className="text-sm font-semibold text-white">{userName}</p>
-      <p className="text-xs text-green-400">● Online</p>
-    </div>
-    <div className="flex gap-4">
-      <button
-        onClick={() => navigate('/edit-profile')}
-        className="text-orange-400 hover:text-orange-500 text-xl transition"
-        title="Editar perfil"
-        style={{ background: 'none', border: 'none' }}
-      >
-        ✏️
-      </button>
-      <button
-        onClick={() => {
-          localStorage.clear();
-          navigate('/');
-        }}
-        className="text-white hover:text-red-500 text-xl transition"
-        title="Sair"
-        style={{ background: 'none', border: 'none' }}
-      >
-        ⏻
-      </button>
-      <button
-        onClick={() => setShowGroupModal(true)}
-        className="text-purple-400 hover:text-purple-500 text-xl transition"
-        title="Criar grupo"
-        style={{ background: 'none', border: 'none' }}
-      >
-        ➕
-      </button>
-    </div>
-  </div>
-</div>
-
+        <div className="flex items-center justify-between bg-[#111827] px-4 py-2 rounded-md">
+          <div>
+            <p className="text-sm font-semibold text-white">{userName}</p>
+            <p className="text-xs text-green-400">● Online</p>
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={() => navigate('/edit-profile')}
+              className="text-orange-400 hover:text-orange-500 text-xl transition"
+              title="Editar perfil"
+              style={{ background: 'none', border: 'none' }}
+            >
+              ✏️
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                navigate('/');
+              }}
+              className="text-white hover:text-red-500 text-xl transition"
+              title="Sair"
+              style={{ background: 'none', border: 'none' }}
+            >
+              ⏻
+            </button>
+            <button
+              onClick={() => setShowGroupModal(true)}
+              className="text-purple-400 hover:text-purple-500 text-xl transition"
+              title="Criar grupo"
+              style={{ background: 'none', border: 'none' }}
+            >
+              ➕
+            </button>
+          </div>
+        </div>
+      </div>
 
       {showGroupModal && (
         <CreateGroupModal
