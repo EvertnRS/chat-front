@@ -27,26 +27,25 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-// Buscar dados do chat atual
   useEffect(() => {
-    const fetchChat = async () => {
+    const fetchChatFromList = async () => {
       try {
-        const res = await api.get<{ id: string; name: string }>(`/chat/${chatId}`);
-        setChatInfo({
-          id: res.data.id,
-          name: res.data.name,
-        });
+        const res = await api.get<Chat[]>('/chat');
+        const foundChat = res.data.find((chat) => chat.id === chatId);
+        if (foundChat) {
+          setChatInfo(foundChat);
+        } else {
+          setChatInfo({ id: chatId, name: 'Chat não encontrado' });
+        }
       } catch (err) {
-        console.error('Erro ao carregar chat:', err);
-        setChatInfo({
-          id: chatId,
-          name: 'Nome não disponível',
-        });
+        console.error('Erro ao carregar lista de chats:', err);
+        setChatInfo({ id: chatId, name: 'Erro ao carregar' });
       }
     };
 
-    fetchChat();
+    fetchChatFromList();
   }, [chatId]);
+
 
   // Conectar ao socket
   useEffect(() => {
