@@ -14,7 +14,7 @@ interface Chat {
 export default function ChatList() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [search, setSearch] = useState('');
-  const [userName, setUserName] = useState('...');
+  const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Usuário');
   const [showGroupModal, setShowGroupModal] = useState(false);
 
   const navigate = useNavigate();
@@ -27,23 +27,20 @@ export default function ChatList() {
     return () => clearTimeout(delayDebounce);
   }, [search]);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    api.get<{ name: string }>('/me', { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setUserName(res.data.name))
-      .catch(() => setUserName('Usuário'));
-  }, []);
-
   const fetchChats = (searchTerm = '') => {
-    api.get<Chat[]>('/chat', { params: { searchTerm } })
-      .then(res => {
+    api
+      .get<Chat[]>('/chat', { params: { searchTerm } })
+      .then((res) => {
         const formatted = res.data.map((chat) => ({
           ...chat,
           avatar: chat.avatar || `https://i.pravatar.cc/40?u=${chat.name}`,
           lastMessage: chat.lastMessage || '',
-          updatedAt: chat.updatedAt || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          updatedAt:
+            chat.updatedAt ||
+            new Date().toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
         }));
         setChats(formatted);
       })
@@ -57,9 +54,13 @@ export default function ChatList() {
     const regex = new RegExp(`(${query})`, 'gi');
     const parts = text.split(regex);
     return parts.map((part, i) =>
-      part.toLowerCase() === query.toLowerCase()
-        ? <span key={i} className="font-bold text-white">{part}</span>
-        : <span key={i}>{part}</span>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <span key={i} className="font-bold text-white">
+          {part}
+        </span>
+      ) : (
+        <span key={i}>{part}</span>
+      )
     );
   }
 
@@ -101,15 +102,25 @@ export default function ChatList() {
           <li
             key={chat.id}
             onClick={() => navigate(`/chats/${chat.id}`)}
-            className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-gray-600 transition ${selectedId === chat.id ? 'bg-gray-700' : ''}`}
+            className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-gray-600 transition ${
+              selectedId === chat.id ? 'bg-gray-700' : ''
+            }`}
           >
-            <img className="w-10 h-10 rounded-full object-cover" src={chat.avatar} alt={chat.name} />
+            <img
+              className="w-10 h-10 rounded-full object-cover"
+              src={chat.avatar}
+              alt={chat.name}
+            />
             <div className="flex-1 overflow-hidden">
               <div className="flex justify-between items-center">
-                <span className="font-medium text-sm truncate max-w-[150px]">{highlightMatch(chat.name, search)}</span>
+                <span className="font-medium text-sm truncate max-w-[150px]">
+                  {highlightMatch(chat.name, search)}
+                </span>
                 <span className="text-xs text-gray-400 ml-2">{chat.updatedAt}</span>
               </div>
-              <span className="text-xs text-gray-400 truncate block max-w-full">{chat.lastMessage}</span>
+              <span className="text-xs text-gray-400 truncate block max-w-full">
+                {chat.lastMessage}
+              </span>
             </div>
           </li>
         ))}
@@ -122,9 +133,30 @@ export default function ChatList() {
             <p className="text-xs text-green-400">● Online</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => navigate('/edit-profile')} className="text-gray-300 hover:text-white text-lg" title="Editar perfil">✏️</button>
-            <button onClick={() => { localStorage.removeItem('token'); navigate('/'); }} className="text-gray-300 hover:text-red-500 text-lg" title="Sair">🔌</button>
-            <button onClick={() => setShowGroupModal(true)} className="text-gray-300 hover:text-green-400 text-lg" title="Criar grupo">➕</button>
+            <button
+              onClick={() => navigate('/edit-profile')}
+              className="text-gray-300 hover:text-white text-lg"
+              title="Editar perfil"
+            >
+              ✏️
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                navigate('/');
+              }}
+              className="text-gray-300 hover:text-red-500 text-lg"
+              title="Sair"
+            >
+              🔌
+            </button>
+            <button
+              onClick={() => setShowGroupModal(true)}
+              className="text-gray-300 hover:text-green-400 text-lg"
+              title="Criar grupo"
+            >
+              ➕
+            </button>
           </div>
         </div>
       </div>
