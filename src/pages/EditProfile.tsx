@@ -9,43 +9,34 @@ const EditProfile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+    // Usa os dados salvos localmente no login
+    const storedName = localStorage.getItem('userName');
+    const storedEmail = localStorage.getItem('userEmail');
 
-      try {
-        const res = await api.get('/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setName(res.data.name);
-        setEmail(res.data.email);
-      } catch (err) {
-        console.error('Erro ao carregar dados do usuário', err);
-      }
-    };
-
-    fetchUser();
+    if (storedName) setName(storedName);
+    if (storedEmail) setEmail(storedEmail);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+
+    if (!token || !userId) return;
 
     try {
       await api.put(
-        '/me',
+        `/users/update/${userId}`,
         { name, email },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Perfil atualizado com sucesso!', {
-        position: 'top-right',
-      });
+
+      // Atualiza os dados locais após o sucesso
+      localStorage.setItem('userName', name);
+      localStorage.setItem('userEmail', email);
+
+      toast.success('Perfil atualizado com sucesso!', { position: 'top-right' });
       navigate('/chats');
     } catch (err) {
       console.error('Erro ao atualizar perfil', err);

@@ -1,7 +1,7 @@
-// src/pages/ChatList.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
+import CreateGroupModal from './CreateGroupModal';
 
 interface Chat {
   id: string;
@@ -16,11 +16,6 @@ export default function ChatList() {
   const [search, setSearch] = useState('');
   const [userName, setUserName] = useState('...');
   const [showGroupModal, setShowGroupModal] = useState(false);
-  const [groupName, setGroupName] = useState('');
-  const [groupDescription, setGroupDescription] = useState('');
-  const [groupMembers, setGroupMembers] = useState('');
-  const [error, setError] = useState('');
-  const [creating, setCreating] = useState(false);
 
   const navigate = useNavigate();
   const { id: selectedId } = useParams();
@@ -36,22 +31,19 @@ export default function ChatList() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    api.get('/me', { headers: { Authorization: `Bearer ${token}` } })
+    api.get<{ name: string }>('/me', { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setUserName(res.data.name))
       .catch(() => setUserName('Usuário'));
   }, []);
 
   const fetchChats = (searchTerm = '') => {
-    api.get('/chat', { params: { searchTerm } })
+    api.get<Chat[]>('/chat', { params: { searchTerm } })
       .then(res => {
-        const formatted = res.data.map((chat: any) => ({
-          id: chat.id,
-          name: chat.name,
+        const formatted = res.data.map((chat) => ({
+          ...chat,
           avatar: chat.avatar || `https://i.pravatar.cc/40?u=${chat.name}`,
           lastMessage: chat.lastMessage || '',
-          updatedAt:
-            chat.updatedAt ||
-            new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          updatedAt: chat.updatedAt || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }));
         setChats(formatted);
       })
@@ -71,49 +63,8 @@ export default function ChatList() {
     );
   }
 
-  const handleCreateGroup = async () => {
-    setCreating(true);
-    setError('');
-
-    const emails = groupMembers
-      .split(',')
-      .map(e => e.trim())
-      .filter(e => e.length > 0);
-
-    try {
-      // ✅ Validar com backend se emails existem
-      const validRes = await api.post('/users/validate-emails', { emails });
-      const validEmails = validRes.data.validEmails;
-
-      if (validEmails.length === 0) {
-        setError('Nenhum email válido encontrado.');
-        setCreating(false);
-        return;
-      }
-
-      // ✅ Criar grupo
-      await api.post('/groups', {
-        name: groupName,
-        description: groupDescription,
-        members: validEmails
-      });
-
-      setShowGroupModal(false);
-      setGroupName('');
-      setGroupDescription('');
-      setGroupMembers('');
-      fetchChats(); // atualiza lista
-    } catch (err) {
-      console.error('Erro ao criar grupo:', err);
-      setError('Erro ao criar grupo');
-    } finally {
-      setCreating(false);
-    }
-  };
-
   return (
     <div className="h-full w-full flex flex-col bg-[#1f2937] text-white">
-      {/* Topo */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -145,7 +96,6 @@ export default function ChatList() {
         </div>
       </div>
 
-      {/* Lista de conversas */}
       <ul className="flex-1 overflow-y-auto px-4 space-y-2">
         {chats.map((chat) => (
           <li
@@ -165,7 +115,6 @@ export default function ChatList() {
         ))}
       </ul>
 
-      {/* Rodapé */}
       <div className="p-4 border-t border-gray-700">
         <div className="flex items-center justify-between bg-[#111827] px-4 py-2 rounded-md">
           <div>
@@ -180,41 +129,13 @@ export default function ChatList() {
         </div>
       </div>
 
-      {/* Modal de criação de grupo */}
       {showGroupModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Criar grupo</h3>
-            <input
-              type="text"
-              placeholder="Nome do grupo"
-              className="w-full mb-2 px-4 py-2 rounded bg-gray-700 text-white"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Descrição"
-              className="w-full mb-2 px-4 py-2 rounded bg-gray-700 text-white"
-              value={groupDescription}
-              onChange={(e) => setGroupDescription(e.target.value)}
-            />
-            <textarea
-              placeholder="E-mails dos integrantes (separados por vírgula)"
-              className="w-full mb-2 px-4 py-2 rounded bg-gray-700 text-white"
-              rows={3}
-              value={groupMembers}
-              onChange={(e) => setGroupMembers(e.target.value)}
-            />
-            {error && <p className="text-red-400 text-sm mb-2">{error}</p>}
-            <div className="flex justify-end gap-2 mt-2">
-              <button onClick={() => setShowGroupModal(false)} className="px-4 py-2 bg-gray-600 rounded text-white">Cancelar</button>
-              <button onClick={handleCreateGroup} disabled={creating} className="px-4 py-2 bg-purple-600 rounded text-white">
-                {creating ? 'Criando...' : 'Criar'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <CreateGroupModal
+          onClose={() => {
+            setShowGroupModal(false);
+            fetchChats();
+          }}
+        />
       )}
     </div>
   );

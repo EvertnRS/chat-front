@@ -1,19 +1,38 @@
 import api from './api';
 
-export const login = async (email: string, password: string) => {
-  const res = await api.post('/login', { email, password });
-  localStorage.setItem('token', res.data.token);
+interface LoginResponse {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  token: string;
+}
+
+interface SignupResponse {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export const login = async (email: string, password: string): Promise<LoginResponse> => {
+  const res = await api.post<LoginResponse>('/login', { email, password });
+
+  const { token, user } = res.data;
+
+  localStorage.setItem('token', token);
+  localStorage.setItem('userId', user.id);
+  localStorage.setItem('userName', user.name);
+  localStorage.setItem('userEmail', user.email);
+
   return res.data;
 };
 
-export const signup = async (name: string, email: string, password: string) => {
-  const res = await api.post('/signup', { name, email, password });
+export const signup = async (
+  name: string,
+  email: string,
+  password: string
+): Promise<SignupResponse> => {
+  const res = await api.post<SignupResponse>('/signup', { name, email, password });
   return res.data;
 };
-
-/*Registrar
-Criar novo grupo 
-	(Editar grupo) 
-	(Adicionar pelo email)
-Grupos sem fotos
-Descrição do grupo*/
