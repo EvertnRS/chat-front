@@ -17,11 +17,15 @@ export default function ChatList() {
   const navigate = useNavigate();
   const { id: selectedId } = useParams();
   const [userName, setUserName] = useState('Usuário');
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
     const storedName = localStorage.getItem('userName');
+    const storedId = localStorage.getItem('userId');
     if (storedName) {
       setUserName(storedName);
+    } if (storedId) {
+    setUserId(storedId);
     } else {
       console.warn('Nome do usuário não encontrado no localStorage');
     }
@@ -79,6 +83,7 @@ export default function ChatList() {
             <p className="text-xl font-semibold text-white leading-tight truncate max-w-[200px]">
               {userName}
             </p>
+            <p className="text-xs text-gray-500 break-words max-w-[300px]">{userId}</p>
           </div>
         </div>
 
