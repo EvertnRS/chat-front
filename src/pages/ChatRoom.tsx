@@ -54,25 +54,26 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
     fetchChatInfo();
   }, [chatId]);
 
-  // Carrega mensagens antigas
   useEffect(() => {
-    const loadMessages = async () => {
-      try {
-        const res = await api.get<MessageFromServer[]>(`/message/${chatId}`);
-        const fetched: Message[] = res.data.map((msg) => ({
+  const loadMessages = async () => {
+    try {
+      const res = await api.get<MessageFromServer[]>(`/message/${chatId}`);
+      const fetched: Message[] = res.data
+        .reverse() // <-- Isso aqui inverte a ordem
+        .map((msg) => ({
           message: msg.text ?? '',
           fileURL: msg.file ?? null,
           from: msg.sender === userId ? 'me' : 'them',
           sentAt: msg.sentAt,
         }));
-        setMessages(fetched);
-      } catch (err) {
-        console.error('Erro ao carregar mensagens:', err);
-      }
-    };
+      setMessages(fetched);
+    } catch (err) {
+      console.error('Erro ao carregar mensagens:', err);
+    }
+  };
 
-    loadMessages();
-  }, [chatId, userId]);
+  loadMessages();
+}, [chatId, userId]);
 
   // Conecta e escuta mensagens em tempo real
   useEffect(() => {
