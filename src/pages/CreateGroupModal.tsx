@@ -10,7 +10,7 @@ interface Member {
 export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');
-  const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -23,21 +23,21 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
     }
   }, [navigate]);
 
-  const handleAddEmail = () => {
+  const handleAddId = () => {
     setError('');
 
-    if (!email.includes('@')) {
-      setError('Email inválido');
+    if (!userId.trim()) {
+      setError('ID inválido');
       return;
     }
 
-    if (members.some((m) => m.email === email)) {
+    if (members.some((m) => m.id === userId.trim())) {
       setError('Usuário já adicionado');
       return;
     }
 
-    setMembers((prev) => [...prev, { id: '', email }]);
-    setEmail('');
+    setMembers((prev) => [...prev, { id: userId.trim(), email: userId.trim() }]);
+    setUserId('');
   };
 
   const handleCreateGroup = async () => {
@@ -48,14 +48,10 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
       formData.append('name', groupName);
       formData.append('description', description);
 
-      const currentUserId = localStorage.getItem('userId');
-      if (currentUserId && !members.find((m) => m.id === currentUserId)) {
-        formData.append('participants', currentUserId);
-      }
-
-      for (const member of members) {
-        formData.append('participants', member.email); // mandamos email, backend rejeita se não encontrar
-      }
+      // Enviar apenas os IDs dos outros membros (o backend já inclui o criador)
+      members.forEach((member) => {
+        formData.append('participants', member.id);
+      });
 
       await api.post('/chat/create', formData, {
         headers: {
@@ -92,13 +88,13 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
 
         <div className="flex gap-2 mb-2">
           <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email do integrante"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            placeholder="ID do integrante"
             className="flex-1 p-2 bg-gray-700 rounded"
           />
           <button
-            onClick={handleAddEmail}
+            onClick={handleAddId}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded"
           >
             +
