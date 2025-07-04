@@ -6,15 +6,8 @@ import CreateGroupModal from './CreateGroupModal';
 interface Chat {
   id: string;
   name: string;
-  avatar: string;
   lastMessage: string;
   updatedAt?: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
 }
 
 export default function ChatList() {
@@ -25,30 +18,13 @@ export default function ChatList() {
   const { id: selectedId } = useParams();
   const [userName, setUserName] = useState('Usuário');
 
-  // Função para buscar o usuário pelo ID salvo
-  const fetchUserName = async () => {
+  useEffect(() => {
     const storedName = localStorage.getItem('userName');
     if (storedName) {
       setUserName(storedName);
-      return;
+    } else {
+      console.warn('Nome do usuário não encontrado no localStorage');
     }
-
-    const userId = localStorage.getItem('userId');
-    if (!userId) return;
-
-    try {
-      const res = await api.get<User>(`/users/${userId}`);
-      if (res.data?.name) {
-        setUserName(res.data.name);
-        localStorage.setItem('userName', res.data.name);
-      }
-    } catch (err) {
-      console.error('Erro ao buscar nome do usuário:', err);
-    }
-  };
-
-  useEffect(() => {
-    fetchUserName();
   }, []);
 
   useEffect(() => {
@@ -64,7 +40,6 @@ export default function ChatList() {
       .then((res) => {
         const formatted = res.data.map((chat) => ({
           ...chat,
-          avatar: chat.avatar || `https://i.pravatar.cc/40?u=${chat.name}`,
           lastMessage: chat.lastMessage || '',
           updatedAt:
             chat.updatedAt ||
@@ -133,26 +108,19 @@ export default function ChatList() {
           <li
             key={chat.id}
             onClick={() => navigate(`/chats/${chat.id}`)}
-            className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-gray-600 transition ${
+            className={`p-2 rounded-md cursor-pointer hover:bg-gray-600 transition ${
               selectedId === chat.id ? 'bg-gray-700' : ''
             }`}
           >
-            <img
-              className="w-10 h-10 rounded-full object-cover"
-              src={chat.avatar}
-              alt={chat.name}
-            />
-            <div className="flex-1 overflow-hidden">
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-sm truncate max-w-[150px]">
-                  {highlightMatch(chat.name, search)}
-                </span>
-                <span className="text-xs text-gray-400 ml-2">{chat.updatedAt}</span>
-              </div>
-              <span className="text-xs text-gray-400 truncate block max-w-full">
-                {chat.lastMessage}
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-sm truncate max-w-[450px]">
+                {highlightMatch(chat.name, search)}
               </span>
+              <span className="text-xs text-gray-400 ml-2">{chat.updatedAt}</span>
             </div>
+            <span className="text-xs text-gray-400 truncate block max-w-full">
+              {chat.lastMessage}
+            </span>
           </li>
         ))}
       </ul>
@@ -164,6 +132,7 @@ export default function ChatList() {
             <p className="text-xs text-green-400">● Online</p>
           </div>
           <div className="flex gap-4">
+            {/* Botão editar perfil */}
             <button
               onClick={() => navigate('/edit-profile')}
               className="text-orange-400 hover:text-orange-500 text-xl transition"
@@ -172,6 +141,8 @@ export default function ChatList() {
             >
               ✏️
             </button>
+
+            {/* Botão sair */}
             <button
               onClick={() => {
                 localStorage.clear();
@@ -183,6 +154,8 @@ export default function ChatList() {
             >
               ⏻
             </button>
+
+            {/* Botão criar grupo */}
             <button
               onClick={() => setShowGroupModal(true)}
               className="text-purple-400 hover:text-purple-500 text-xl transition"

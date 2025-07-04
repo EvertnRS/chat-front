@@ -1,142 +1,101 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
-interface ValidUser {
-  id: string;
-  email: string;
-}
-
-export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
-  const [groupName, setGroupName] = useState('');
-  const [description, setDescription] = useState('');
+const EditProfile = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [members, setMembers] = useState<ValidUser[]>([]);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
+    const localName = localStorage.getItem('userName');
+    const localEmail = localStorage.getItem('userEmail');
+
+    if (localName) setName(localName);
+    if (localEmail) setEmail(localEmail);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Você precisa estar logado para criar um grupo.');
-      navigate('/login');
+    const userId = localStorage.getItem('userId');
+
+    if (!token || !userId) {
+      toast.error('Usuário não autenticado.');
+      return;
     }
-  }, [navigate]);
 
-  const handleAddEmail = async () => {
-    setError('');
     try {
-      const res = await api.get(`/users/by-email/${email}`); // Novo endpoint que você adicionou
-      const valid = res.data as ValidUser;
-
-      if (!valid || !valid.id) {
-        setError('Usuário não encontrado');
-        return;
-      }
-
-      if (members.some((m) => m.id === valid.id)) {
-        setError('Usuário já adicionado');
-        return;
-      }
-
-      setMembers((prev) => [...prev, valid]);
-      setEmail('');
-    } catch (err: any) {
-      console.error('Erro ao validar email:', err?.response?.status, err?.response?.data);
-      setError('Erro ao validar e-mail');
-    }
-  };
-
-  const handleCreateGroup = async () => {
-    setError('');
-    try {
-      const formData = new FormData();
-      formData.append('name', groupName);
-      formData.append('description', description);
-
-      const currentUserId = localStorage.getItem('userId');
-      if (!currentUserId) {
-        setError('Usuário logado não identificado.');
-        return;
-      }
-
-      const allMembers = [...members];
-      if (!allMembers.some((m) => m.id === currentUserId)) {
-        allMembers.push({ id: currentUserId, email: 'Você' });
-      }
-
-      allMembers.forEach((member) => {
-        formData.append('participants', member.id);
-      });
-
-      await api.post('/chat/create', formData, {
+      const res = await api.put(`/users/update/${userId}`, { name, email }, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      onClose();
-    } catch (err: any) {
-      const msg = err.response?.data?.error || 'Erro ao criar grupo';
-      console.error(msg);
-      setError(msg);
+      localStorage.setItem('userName', name);
+      localStorage.setItem('userEmail', email);
+
+      toast.success('Perfil atualizado com sucesso!', {
+        position: 'top-right',
+      });
+      navigate('/chats');
+    } catch (err) {
+      console.error('Erro ao atualizar perfil', err);
+      toast.error('Erro ao atualizar perfil.');
     }
   };
 
+  const handleCancel = () => {
+    navigate('/chats');
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-[#1f2937] p-6 rounded-lg w-[400px] text-white">
-        <h2 className="text-lg font-semibold mb-4">Criar Grupo</h2>
-
-        <input
-          value={groupName}
-          onChange={(e) => setGroupName(e.target.value)}
-          placeholder="Nome do grupo"
-          className="w-full p-2 mb-2 bg-gray-700 rounded"
-        />
-        <input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Descrição"
-          className="w-full p-2 mb-2 bg-gray-700 rounded"
-        />
-
-        <div className="flex gap-2 mb-2">
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email do integrante"
-            className="flex-1 p-2 bg-gray-700 rounded"
-          />
-          <button
-            onClick={handleAddEmail}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded"
-          >
-            +
-          </button>
-        </div>
-
-        {error && <p className="text-red-400 mb-2">{error}</p>}
-
-        <ul className="text-sm text-gray-300 mb-4">
-          {members.map((m, i) => (
-            <li key={i}>• {m.email}</li>
-          ))}
-        </ul>
-
-        <div className="flex justify-between">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded">
-            Cancelar
-          </button>
-          <button
-            onClick={handleCreateGroup}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded"
-          >
-            Criar Grupo
-          </button>
-        </div>
+    <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 px-4">
+      <div className="w-full max-w-md bg-[#1a1f2e] rounded-xl shadow-xl p-8">
+        <h2 className="text-3xl font-bold text-center text-white mb-8">Editar Perfil</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-gray-300 text-sm mb-1">Nome</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Seu nome"
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-300 text-sm mb-1">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+              required
+            />
+          </div>
+          <div className="flex justify-between gap-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="w-full bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 rounded-md transition duration-200"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-md transition duration-200"
+            >
+              Salvar
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
-}
+};
+
+export default EditProfile;

@@ -27,6 +27,7 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+  // Buscar o nome do chat a partir da lista de chats
   useEffect(() => {
     const fetchChatFromList = async () => {
       try {
@@ -45,7 +46,6 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
 
     fetchChatFromList();
   }, [chatId]);
-
 
   // Conectar ao socket
   useEffect(() => {
@@ -89,7 +89,7 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
     <div className="chat-room">
       <div className="chat-header px-4 py-3 border-b border-gray-700 bg-[#1a1f2e] flex items-center gap-2">
         <span className="text-purple-400 text-xl">💬</span>
-        <h2 className="text-lg font-semibold text-white truncate">
+        <h2 className="text-lg font-semibold text-white truncate max-w-full">
           {chatInfo?.name || 'Carregando...'}
         </h2>
       </div>
@@ -103,7 +103,6 @@ const ChatRoom = ({ chatId, token }: ChatRoomProps) => {
         <div ref={bottomRef} />
       </div>
 
-      {/* 📝 Input + Emojis */}
       <div className="chat-input">
         <button
           onClick={() => setShowEmojiPicker((prev) => !prev)}
