@@ -48,7 +48,6 @@ export default function CreateGroupModal({ onClose }: { onClose: () => void }) {
       formData.append('name', groupName);
       formData.append('description', description);
 
-      // Enviar apenas os IDs dos outros membros (o backend já inclui o criador)
       members.forEach((member) => {
         formData.append('participants', member.id);
       });
