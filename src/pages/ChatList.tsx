@@ -104,26 +104,27 @@ export default function ChatList() {
       </div>
 
       <ul className="flex-1 overflow-y-auto px-4 space-y-2">
-        {chats.map((chat) => (
-          <li
-            key={chat.id}
-            onClick={() => navigate(`/chats/${chat.id}`)}
-            className={`p-2 rounded-md cursor-pointer hover:bg-gray-600 transition ${
-              selectedId === chat.id ? 'bg-gray-700' : ''
-            }`}
-          >
-            <div className="flex justify-between items-center">
-              <span className="font-medium text-sm truncate max-w-[450px]">
-                {highlightMatch(chat.name, search)}
-              </span>
-              <span className="text-xs text-gray-400 ml-2">{chat.updatedAt}</span>
-            </div>
-            <span className="text-xs text-gray-400 truncate block max-w-full">
-              {chat.lastMessage}
+      {chats.map((chat) => (
+        <li
+          key={chat.id}
+          onClick={() => navigate(`/chats/${chat.id}`)}
+          className={`p-2 rounded-md cursor-pointer hover:bg-gray-600 transition ${
+            selectedId === chat.id ? 'bg-gray-700' : ''
+          }`}
+        >
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-lg truncate max-w-[450px]">
+              {highlightMatch(chat.name, search)}
             </span>
-          </li>
-        ))}
-      </ul>
+            <span className="text-sm text-gray-400 ml-2">{chat.updatedAt}</span>
+          </div>
+          <span className="text-sm text-gray-400 truncate block max-w-full">
+            {chat.lastMessage}
+          </span>
+        </li>
+      ))}
+    </ul>
+
 
       <div className="p-4 border-t border-gray-700">
         <div className="flex items-center justify-between bg-[#111827] px-4 py-2 rounded-md">
